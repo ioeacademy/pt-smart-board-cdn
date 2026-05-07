@@ -1,8 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "currentVersion": "2.0.0",
+  "currentVersion": "2.0.1",
   "versions": {
-    "2.0.0": "dist/board-v2.0.0.html"
+    "2.0.0": "dist/board-v2.0.0.html",
+    "2.0.1": "dist/board-v2.0.1.html"
   },
-  "updatedAt": "2026-05-07T00:00:00Z"
+  "updatedAt": "2026-05-07T15:09:05.101Z"
 }
