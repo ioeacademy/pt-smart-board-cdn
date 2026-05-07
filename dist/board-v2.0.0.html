@@ -7704,7 +7704,13 @@ function createLinkInPT(linkId) {
     link.ptCreated = true;
     
     
-    setTimeout(() => verifyLinkInPT(linkId), 350);
+    
+    
+    
+    
+    
+    const verifyDelay = (typeof window.__BRIDGE_ACTIVE !== 'undefined') ? 1800 : 350;
+    setTimeout(() => verifyLinkInPT(linkId), verifyDelay);
     return true;
   } catch(e) { return false; }
 }
