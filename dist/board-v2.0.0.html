@@ -791,68 +791,123 @@
   
   
   
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
 
-  function _makeProxy(segments) {
+  function _makePendingProxy(parentPromise, segments) {
     
     
     
     
-    const fn = function () {};
-    return new Proxy(fn, {
+    return new Proxy(function () {}, {
       get: function (_t, prop) {
+        if (prop === 'then' || prop === 'catch' || prop === 'finally') {
+          
+          
+          return _toPromiseWrapper(parentPromise, segments)[prop].bind(_toPromiseWrapper(parentPromise, segments));
+        }
+        if (typeof prop === 'symbol' || prop === 'toString' || prop === 'toJSON') return undefined;
         
+        return _makePendingProxy(parentPromise, segments.concat([{ name: prop, args: null }]));
+      },
+      apply: function (_t, _this, args) {
+        
+        if (segments.length === 0) {
+          
+          const p = _fire(parentPromise, [{ args: Array.from(args) }]);
+          return _wrapPromise(p);
+        }
+        const fullChain = segments.slice(0, -1).concat([{
+          name: segments[segments.length - 1].name,
+          args: Array.from(args),
+        }]);
+        const promise = _fire(parentPromise, fullChain);
+        
+        
+        
+        return _wrapPromise(promise);
+      },
+    });
+  }
+
+  function _wrapPromise(promise) {
+    
+    
+    
+    return new Proxy(function () {}, {
+      get: function (_t, prop) {
         if (prop === 'then') {
           return function (resolve, reject) {
-            
-            _rpc('ipcCall', { segments: segments }).then(function (value) {
+            promise.then(function (value) {
               if (value && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, '__handle')) {
-                resolve(_makeProxy([{ handle: value.__handle, args: null }]));
+                
+                
+                resolve(_makePendingProxy(Promise.resolve(value), []));
               } else {
                 resolve(value);
               }
             }, reject);
           };
         }
-        if (prop === 'catch') {
-          return function (rej) {
-            return _makeProxy(segments).then(undefined, rej);
-          };
-        }
-        if (prop === 'finally') {
-          return function (cb) {
-            return _makeProxy(segments).then(
-              function (v) { cb(); return v; },
-              function (e) { cb(); throw e; }
-            );
-          };
-        }
-        
-        if (typeof prop === 'symbol') return undefined;
+        if (prop === 'catch')   return function (r) { return _wrapPromise(promise).then(undefined, r); };
+        if (prop === 'finally') return function (cb) {
+          return _wrapPromise(promise).then(
+            function (v) { try { cb(); } catch (_) {} return v; },
+            function (e) { try { cb(); } catch (_) {} throw e; }
+          );
+        };
+        if (typeof prop === 'symbol' || prop === 'toString' || prop === 'toJSON') return undefined;
         
         
-        if (prop === 'toString' || prop === 'toJSON') return undefined;
-
-        
-        return _makeProxy(segments.concat([{ name: prop, args: null }]));
-      },
-      apply: function (_t, _this, args) {
-        
-        
-        if (segments.length === 0) {
-          return _rpc('ipcCall', { segments: [{ args: Array.from(args) }] });
-        }
-        const updated = segments.slice(0, -1);
-        const last = segments[segments.length - 1];
-        updated.push({ handle: last.handle, name: last.name, args: Array.from(args) });
-        return _makeProxy(updated);
+        return _makePendingProxy(promise, [{ name: prop, args: null }]);
       },
     });
+  }
+
+  function _toPromiseWrapper(parentPromise, segments) {
+    
+    
+    
+    
+    if (segments.length === 0 && parentPromise) return _wrapPromise(parentPromise);
+    return _wrapPromise(_fire(parentPromise, segments));
+  }
+
+  function _fire(parentPromise, segments) {
+    
+    
+    if (parentPromise) {
+      return parentPromise.then(function (parentValue) {
+        if (parentValue && typeof parentValue === 'object' && Object.prototype.hasOwnProperty.call(parentValue, '__handle') && segments.length) {
+          
+          const rooted = [{ handle: parentValue.__handle, name: segments[0].name, args: segments[0].args }]
+            .concat(segments.slice(1));
+          return _rpc('ipcCall', { segments: rooted });
+        }
+        
+        if (segments.length === 0) return parentValue;
+        return _rpc('ipcCall', { segments: segments });
+      });
+    }
+    return _rpc('ipcCall', { segments: segments });
   }
 
   
   
   
-  window.ipc = _makeProxy([]);
+  
+  window.ipc = _makePendingProxy(null, []);
 
   
   
