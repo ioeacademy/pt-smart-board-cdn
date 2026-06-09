@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "currentVersion": "2.1.7",
+  "currentVersion": "2.1.8",
   "versions": {
     "2.0.0": "dist/board-v2.0.0.html",
     "2.0.1": "dist/board-v2.0.1.html",
@@ -11,7 +11,8 @@
     "2.1.4": "dist/board-v2.1.4.html",
     "2.1.5": "dist/board-v2.1.5.html",
     "2.1.6": "dist/board-v2.1.6.html",
-    "2.1.7": "dist/board-v2.1.7.html"
+    "2.1.7": "dist/board-v2.1.7.html",
+    "2.1.8": "dist/board-v2.1.8.html"
   },
-  "updatedAt": "2026-06-09T22:07:46.265Z"
+  "updatedAt": "2026-06-09T22:14:10.301Z"
 }
